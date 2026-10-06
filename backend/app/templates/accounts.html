@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Cari Hesaplar{% endblock %}
+{% block page_title %}Cari Hesaplar{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="text-left text-slate-500 border-b border-slate-200 bg-slate-50">
+        <tr>
+          <th class="py-3 px-4">Ad</th><th>Tür</th><th>IBAN</th><th>Bakiye</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for row in rows %}
+        <tr>
+          <td class="py-3 px-4 font-medium">{{ row.account.name }}</td>
+          <td class="capitalize">{{ row.account.account_type.value }}</td>
+          <td class="text-slate-500">{{ row.account.iban or "-" }}</td>
+          <td class="{{ 'text-brand-600' if row.balance >= 0 else 'text-rose-600' }} font-medium">
+            {{ "%.2f"|format(row.balance) }} ₺
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="py-6 px-4 text-center text-slate-400">Henüz cari hesap eklenmedi.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h2 class="font-semibold mb-4">Yeni Cari Hesap</h2>
+    <form method="post" action="/cari" class="space-y-3 text-sm">
+      <div>
+        <label class="block text-slate-600 mb-1">Ad / Unvan</label>
+        <input name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1">Tür</label>
+        <select name="account_type" class="w-full rounded-lg border border-slate-300 px-3 py-2">
+          {% for t in account_types %}
+          <option value="{{ t.value }}">{{ t.value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1">IBAN</label>
+        <input name="iban" class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1">Vergi No</label>
+        <input name="tax_number" class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1">Eşleştirme Anahtar Kelimeleri</label>
+        <input name="match_aliases" placeholder="ACME LTD, ACME TIC"
+               class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <p class="text-xs text-slate-400 mt-1">Ekstre açıklamalarında aranacak alternatif isimler.</p>
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1">Açılış Bakiyesi</label>
+        <input type="number" step="0.01" name="opening_balance" value="0"
+               class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-lg py-2 font-medium">
+        Kaydet
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

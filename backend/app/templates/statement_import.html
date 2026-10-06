@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Ekstre Aktarımı{% endblock %}
+{% block page_title %}Akıllı Ekstre Aktarımı{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+  <h2 class="font-semibold mb-3">Ekstre Yükle</h2>
+  <p class="text-sm text-slate-500 mb-4">
+    Bankanızdan aldığınız Excel (.xlsx/.xls) veya PDF formatındaki ekstreyi yükleyin;
+    sistem satırları okuyup açıklama metnine göre otomatik olarak cari hesaplarla eşleştirmeye çalışır.
+  </p>
+  {% if error %}
+  <div class="mb-4 rounded-lg bg-rose-50 text-rose-700 text-sm px-4 py-3">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/ekstre/upload" enctype="multipart/form-data" class="flex items-center gap-3">
+    <input type="file" name="file" accept=".xlsx,.xls,.pdf" required
+           class="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2" />
+    <button class="bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-4 py-2 text-sm font-medium">
+      Yükle ve Eşleştir
+    </button>
+  </form>
+</div>
+
+{% for imp in imports %}
+<div class="bg-white rounded-xl border border-slate-200 mb-6 overflow-hidden">
+  <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50">
+    <div>
+      <p class="font-medium">{{ imp.filename }}</p>
+      <p class="text-xs text-slate-500">{{ imp.file_type.value|upper }} · {{ imp.created_at.strftime("%d.%m.%Y %H:%M") }}</p>
+    </div>
+    <p class="text-sm text-slate-600">{{ imp.matched_rows }} / {{ imp.total_rows }} satır otomatik eşleşti</p>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="text-left text-slate-500 border-b border-slate-200">
+      <tr>
+        <th class="py-2 px-4">Tarih</th><th>Açıklama</th><th>Tutar</th><th>Eşleşen Cari</th><th>Durum</th><th>İşlem</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for line in imp.lines %}
+      <tr>
+        <td class="py-2 px-4">{{ line.transaction_date }}</td>
+        <td class="max-w-xs truncate" title="{{ line.raw_description }}">{{ line.raw_description }}</td>
+        <td class="{{ 'text-brand-600' if line.amount >= 0 else 'text-rose-600' }}">{{ "%.2f"|format(line.amount) }} ₺</td>
+        <td>
+          {% if line.matched_account_name %}
+            {{ line.matched_account_name }}
+            <span class="text-xs text-slate-400">({{ "%.0f"|format(line.match_confidence or 0) }}%)</span>
+          {% else %}
+            <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+            {{ {
+              'eslesti': 'bg-brand-100 text-brand-700',
+              'bekliyor': 'bg-amber-100 text-amber-700',
+              'manuel': 'bg-blue-100 text-blue-700',
+              'reddedildi': 'bg-slate-100 text-slate-500',
+            }[line.status.value] }}">
+            {{ line.status.value }}
+          </span>
+        </td>
+        <td>
+          {% if line.status.value != 'eslesti' and line.status.value != 'manuel' %}
+          <form method="post" action="/ekstre/lines/{{ line.id }}/confirm" class="flex items-center gap-1">
+            <select name="account_id" class="text-xs border border-slate-300 rounded px-1 py-1">
+              {% for a in accounts %}
+              <option value="{{ a.id }}">{{ a.name }}</option>
+              {% endfor %}
+            </select>
+            <button class="text-xs bg-brand-600 text-white rounded px-2 py-1">Eşleştir</button>
+          </form>
+          <form method="post" action="/ekstre/lines/{{ line.id }}/reject" class="inline">
+            <button class="text-xs text-slate-400 hover:text-rose-600 mt-1">Yoksay</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-slate-400 text-sm">Henüz ekstre yüklenmedi.</p>
+{% endfor %}
+{% endblock %}

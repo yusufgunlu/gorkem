@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Raporlar{% endblock %}
+{% block page_title %}Finansal Raporlar{% endblock %}
+
+{% block content %}
+<form method="get" action="/raporlar" class="flex items-end gap-3 mb-6 bg-white rounded-xl border border-slate-200 p-4">
+  <div>
+    <label class="block text-xs text-slate-600 mb-1">Başlangıç</label>
+    <input type="date" name="start" value="{{ start }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+  </div>
+  <div>
+    <label class="block text-xs text-slate-600 mb-1">Bitiş</label>
+    <input type="date" name="end" value="{{ end }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+  </div>
+  <button class="bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-4 py-2 text-sm font-medium">
+    Uygula
+  </button>
+</form>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Toplam Gelir</p>
+    <p class="text-2xl font-semibold mt-1 text-brand-600">{{ "%.2f"|format(total_income) }} ₺</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Toplam Gider</p>
+    <p class="text-2xl font-semibold mt-1 text-rose-600">{{ "%.2f"|format(total_expense) }} ₺</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Net</p>
+    <p class="text-2xl font-semibold mt-1 {{ 'text-brand-600' if net >= 0 else 'text-rose-600' }}">{{ "%.2f"|format(net) }} ₺</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+    <h2 class="font-semibold mb-4">Dönemsel Nakit Akışı</h2>
+    <canvas id="cashflowChart" height="120"></canvas>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h2 class="font-semibold mb-4">Kategori Kırılımı</h2>
+    <ul class="space-y-2 text-sm">
+      {% for category, amount in by_category.items() %}
+      <li class="flex justify-between">
+        <span class="text-slate-600">{{ category }}</span>
+        <span class="font-medium">{{ "%.2f"|format(amount) }} ₺</span>
+      </li>
+      {% else %}
+      <li class="text-slate-400">Seçili dönemde hareket yok.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<script>
+  new Chart(document.getElementById("cashflowChart"), {
+    type: "line",
+    data: {
+      labels: {{ cashflow_labels | tojson }},
+      datasets: [{
+        label: "Kümülatif Bakiye",
+        data: {{ cashflow_values | tojson }},
+        borderColor: "#158655",
+        backgroundColor: "rgba(21, 134, 85, 0.1)",
+        fill: true,
+        tension: 0.3,
+      }],
+    },
+    options: { plugins: { legend: { display: false } } },
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+{% block page_title %}Genel Durum{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Toplam Bakiye</p>
+    <p class="text-2xl font-semibold mt-1">{{ "%.2f"|format(total_balance) }} ₺</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Cari Hesap Sayısı</p>
+    <p class="text-2xl font-semibold mt-1">{{ account_count }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Son 30 Gün Gelir</p>
+    <p class="text-2xl font-semibold mt-1 text-brand-600">{{ "%.2f"|format(total_income_30d) }} ₺</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Son 30 Gün Gider</p>
+    <p class="text-2xl font-semibold mt-1 text-rose-600">{{ "%.2f"|format(total_expense_30d) }} ₺</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+    <h2 class="font-semibold mb-4">Nakit Akışı (Önümüzdeki 14 Gün)</h2>
+    <canvas id="cashflowChart" height="120"></canvas>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h2 class="font-semibold mb-4">Yaklaşan Vadeler</h2>
+    <ul class="space-y-3 text-sm">
+      {% for t in upcoming_tx %}
+      <li class="flex justify-between items-center">
+        <div>
+          <p class="font-medium">{{ t.description or t.account.name }}</p>
+          <p class="text-slate-500 text-xs">{{ t.due_date }}</p>
+        </div>
+        <span class="font-medium {{ 'text-brand-600' if t.transaction_type.value == 'gelir' else 'text-rose-600' }}">
+          {{ "%.2f"|format(t.amount) }} ₺
+        </span>
+      </li>
+      {% else %}
+      <li class="text-slate-400">Yaklaşan hareket yok.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 p-5 mt-6">
+  <h2 class="font-semibold mb-4">Portföydeki Çekler (30 gün içinde vadesi gelenler)</h2>
+  <table class="w-full text-sm">
+    <thead class="text-left text-slate-500 border-b border-slate-200">
+      <tr>
+        <th class="py-2">Cari</th><th>Çek No</th><th>Banka</th><th>Vade</th><th>Tutar</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for c in upcoming_checks %}
+      <tr>
+        <td class="py-2">{{ c.account.name }}</td>
+        <td>{{ c.check_number }}</td>
+        <td>{{ c.bank_name or "-" }}</td>
+        <td>{{ c.due_date }}</td>
+        <td>{{ "%.2f"|format(c.amount) }} ₺</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="py-4 text-center text-slate-400">Vadesi yaklaşan çek yok.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const ctx = document.getElementById("cashflowChart");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: {{ cashflow_labels | tojson }},
+      datasets: [{
+        label: "Kümülatif Bakiye",
+        data: {{ cashflow_values | tojson }},
+        borderColor: "#158655",
+        backgroundColor: "rgba(21, 134, 85, 0.1)",
+        fill: true,
+        tension: 0.3,
+      }],
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } },
+  });
+</script>
+{% endblock %}
