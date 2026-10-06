@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.core.paths import get_app_dir
 from app.models.account import Account
 from app.models.base import AccountType, CheckDirection, CheckStatus, TransactionType
 from app.models.check import Check
@@ -21,7 +22,7 @@ from app.services.statement_service import (
 )
 
 router = APIRouter(tags=["Arayüz"])
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(get_app_dir() / "templates"))
 
 
 def _account_balance(account: Account) -> float:
