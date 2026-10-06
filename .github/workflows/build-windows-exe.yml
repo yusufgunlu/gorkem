@@ -1,0 +1,46 @@
+name: GÖRKEM Windows .exe Derle
+
+# Bu branch'e her push'ta otomatik derler; "Actions" sekmesinden elle de
+# (workflow_dispatch) tetiklenebilir. Çıktı, çalıştırmanın "Artifacts"
+# bölümünden indirilebilir bir .exe dosyasıdır.
+on:
+  push:
+    branches:
+      - claude/gorkem-finance-app-xact5q
+    paths:
+      - "backend/**"
+      - ".github/workflows/build-windows-exe.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Python 3.12 kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bağımlılıkları kur
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Testleri çalıştır
+        run: pytest -q
+
+      - name: .exe derle (PyInstaller)
+        run: pyinstaller build.spec
+
+      - name: .exe'yi artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: GORKEM-windows-exe
+          path: backend/dist/GORKEM.exe
+          if-no-files-found: error
