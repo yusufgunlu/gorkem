@@ -12,6 +12,9 @@ on:
       - ".github/workflows/build-windows-exe.yml"
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -44,3 +47,8 @@ jobs:
           name: GORKEM-windows-exe
           path: backend/dist/GORKEM.exe
           if-no-files-found: error
+
+      - name: .exe'yi GitHub Release'e yükle
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "build-${{ github.run_number }}" dist/GORKEM.exe --repo ${{ github.repository }} --title "GÖRKEM Windows Build #${{ github.run_number }}" --notes "Otomatik derlenen GORKEM.exe (commit ${{ github.sha }})"
