@@ -51,4 +51,7 @@ jobs:
       - name: .exe'yi GitHub Release'e yükle
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "build-${{ github.run_number }}" dist/GORKEM.exe --repo ${{ github.repository }} --title "GÖRKEM Windows Build #${{ github.run_number }}" --notes "Otomatik derlenen GORKEM.exe (commit ${{ github.sha }})"
+          RELEASE_TAG: build-${{ github.run_number }}
+          RELEASE_TITLE: GORKEM Windows Build ${{ github.run_number }}
+          RELEASE_NOTES: Otomatik derlenen GORKEM.exe (commit ${{ github.sha }})
+        run: gh release create "$env:RELEASE_TAG" dist/GORKEM.exe --repo ${{ github.repository }} --title "$env:RELEASE_TITLE" --notes "$env:RELEASE_NOTES"
